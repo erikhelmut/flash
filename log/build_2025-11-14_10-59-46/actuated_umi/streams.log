@@ -1,0 +1,22 @@
+[0.466s] Invoking command in '/home/erik/flash/src/actuated_umi': CONDA_PROMPT_MODIFIER=(flash) DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/erik/flash/build/actuated_umi/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/erik/flash/install/actuated_umi/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/actuated_umi build --build-base /home/erik/flash/build/actuated_umi/build install --record /home/erik/flash/build/actuated_umi/install.log --single-version-externally-managed install_data
+[0.587s] running egg_info
+[0.594s] writing ../../build/actuated_umi/actuated_umi.egg-info/PKG-INFO
+[0.594s] writing dependency_links to ../../build/actuated_umi/actuated_umi.egg-info/dependency_links.txt
+[0.594s] writing entry points to ../../build/actuated_umi/actuated_umi.egg-info/entry_points.txt
+[0.594s] writing requirements to ../../build/actuated_umi/actuated_umi.egg-info/requires.txt
+[0.594s] writing top-level names to ../../build/actuated_umi/actuated_umi.egg-info/top_level.txt
+[0.607s] reading manifest file '../../build/actuated_umi/actuated_umi.egg-info/SOURCES.txt'
+[0.607s] adding license file 'LICENSE'
+[0.607s] writing manifest file '../../build/actuated_umi/actuated_umi.egg-info/SOURCES.txt'
+[0.607s] running build
+[0.607s] running build_py
+[0.607s] running install
+[0.610s] running install_lib
+[0.617s] running install_data
+[0.617s] running install_egg_info
+[0.624s] removing '/home/erik/flash/install/actuated_umi/lib/python3.12/site-packages/actuated_umi-0.0.1-py3.12.egg-info' (and everything under it)
+[0.624s] Copying ../../build/actuated_umi/actuated_umi.egg-info to /home/erik/flash/install/actuated_umi/lib/python3.12/site-packages/actuated_umi-0.0.1-py3.12.egg-info
+[0.624s] running install_scripts
+[0.673s] Installing actuated_umi_node script to /home/erik/flash/install/actuated_umi/lib/actuated_umi
+[0.674s] writing list of installed files to '/home/erik/flash/build/actuated_umi/install.log'
+[0.688s] Invoked command in '/home/erik/flash/src/actuated_umi' returned '0': CONDA_PROMPT_MODIFIER=(flash) DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/erik/flash/build/actuated_umi/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/erik/flash/install/actuated_umi/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/actuated_umi build --build-base /home/erik/flash/build/actuated_umi/build install --record /home/erik/flash/build/actuated_umi/install.log --single-version-externally-managed install_data

@@ -1,0 +1,23 @@
+running egg_info
+writing ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/PKG-INFO
+writing dependency_links to ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/dependency_links.txt
+writing entry points to ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/entry_points.txt
+writing requirements to ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/requires.txt
+writing top-level names to ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/top_level.txt
+reading manifest file '../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info/SOURCES.txt'
+running build
+running build_py
+copying neuromorphic_tactile_array/nts_node.py -> /home/erik/flash/build/neuromorphic_tactile_array/build/lib/neuromorphic_tactile_array
+running install
+running install_lib
+copying /home/erik/flash/build/neuromorphic_tactile_array/build/lib/neuromorphic_tactile_array/nts_node.py -> /home/erik/flash/install/neuromorphic_tactile_array/lib/python3.12/site-packages/neuromorphic_tactile_array
+byte-compiling /home/erik/flash/install/neuromorphic_tactile_array/lib/python3.12/site-packages/neuromorphic_tactile_array/nts_node.py to nts_node.cpython-312.pyc
+running install_data
+running install_egg_info
+removing '/home/erik/flash/install/neuromorphic_tactile_array/lib/python3.12/site-packages/neuromorphic_tactile_array-0.0.1-py3.12.egg-info' (and everything under it)
+Copying ../../build/neuromorphic_tactile_array/neuromorphic_tactile_array.egg-info to /home/erik/flash/install/neuromorphic_tactile_array/lib/python3.12/site-packages/neuromorphic_tactile_array-0.0.1-py3.12.egg-info
+running install_scripts
+Installing nts_node script to /home/erik/flash/install/neuromorphic_tactile_array/lib/neuromorphic_tactile_array
+writing list of installed files to '/home/erik/flash/build/neuromorphic_tactile_array/install.log'

@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: neuromorphic-tactile-array
+Version: 0.0.1
+Summary: Neuromorphic Tactile Array ROS2 Jazzy Package
+Maintainer: erik
+Maintainer-email: erik.helmut1@gmail.com
+License: Apache-2.0
+License-File: LICENSE

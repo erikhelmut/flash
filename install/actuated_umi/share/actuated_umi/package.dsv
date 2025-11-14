@@ -1,0 +1,6 @@
+source;share/actuated_umi/hook/pythonpath.ps1
+source;share/actuated_umi/hook/pythonpath.dsv
+source;share/actuated_umi/hook/pythonpath.sh
+source;share/actuated_umi/hook/ament_prefix_path.ps1
+source;share/actuated_umi/hook/ament_prefix_path.dsv
+source;share/actuated_umi/hook/ament_prefix_path.sh
