@@ -1,8 +1,0 @@
-Metadata-Version: 2.1
-Name: actuated-umi
-Version: 0.0.1
-Summary: Actuated-UMI ROS2 Jazzy Package
-Maintainer: erik
-Maintainer-email: erik.helmut1@gmail.com
-License: Apache-2.0
-License-File: LICENSE

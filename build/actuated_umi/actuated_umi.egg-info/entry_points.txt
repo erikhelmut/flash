@@ -1,2 +1,0 @@
-[console_scripts]
-actuated_umi_node = actuated_umi.actuated_umi_node:main

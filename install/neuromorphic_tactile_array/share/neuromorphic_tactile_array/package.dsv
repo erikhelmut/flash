@@ -1,6 +1,0 @@
-source;share/neuromorphic_tactile_array/hook/pythonpath.ps1
-source;share/neuromorphic_tactile_array/hook/pythonpath.dsv
-source;share/neuromorphic_tactile_array/hook/pythonpath.sh
-source;share/neuromorphic_tactile_array/hook/ament_prefix_path.ps1
-source;share/neuromorphic_tactile_array/hook/ament_prefix_path.dsv
-source;share/neuromorphic_tactile_array/hook/ament_prefix_path.sh

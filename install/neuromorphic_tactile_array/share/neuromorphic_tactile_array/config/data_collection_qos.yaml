@@ -1,5 +1,0 @@
-neuromorphic_tactile_array_node:
-  ros__parameters:
-    neuromorphic_tactile_array.qos.reliability: reliable
-    neuromorphic_tactile_array.qos.history: keep_all
-    neuromorphic_tactile_array.qos.depth: 10
