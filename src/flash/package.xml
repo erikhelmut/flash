@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>neuromorphic_tactile_array</name>
+  <name>flash</name>
   <version>0.0.1</version>
-  <description>Neuromorphic Tactile Array ROS2 Jazzy Package</description>
+  <description>Flash ROS2 Jazzy package</description>
   <maintainer email="erik.helmut1@gmail.com">erik</maintainer>
   <license>Apache-2.0</license>
 

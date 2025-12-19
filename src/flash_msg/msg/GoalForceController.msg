@@ -1,0 +1,2 @@
+float32 goal_force
+int16 goal_position

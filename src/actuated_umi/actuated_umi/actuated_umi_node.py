@@ -32,6 +32,9 @@ class ActuatedUMINode(Node):
         self.gripper = ActuatedUMI(self.connector)
         self.gripper.torque_enabled = False
         self.gripper.operating_mode = 4  # extended position control mode
+
+        # disable saftey shutdown
+        self.connector.write_field("shutdown", 0)
         
         # set the PID gains for position control
         self.gripper.position_p_gain = 640

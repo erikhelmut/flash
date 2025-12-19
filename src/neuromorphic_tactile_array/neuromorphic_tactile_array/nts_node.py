@@ -144,6 +144,7 @@ class NeuromorphicTactileArrayNode(Node):
 
                 # flip vertically to match physical layout
                 s1 = np.flipud(s1)
+
                 #s2 = np.flipud(s2)
 
                 # flip sensor 2 along horizontal axis to match physical layout
@@ -191,6 +192,7 @@ def main(args=None):
 
         nta_node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()
