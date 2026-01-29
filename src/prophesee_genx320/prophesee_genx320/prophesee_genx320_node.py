@@ -10,8 +10,10 @@ import zmq
 import msgpack
 import msgpack_numpy as m
 m.patch()
+import lz4.frame
 import numpy as np
 import cv2
+import threading
 
 
 class PropheseeGENX320Node(Node):
@@ -30,7 +32,13 @@ class PropheseeGENX320Node(Node):
         self.socket.bind(f"tcp://*:{5555}")
         self.socket.setsockopt(zmq.SUBSCRIBE, b"")
         self.socket.setsockopt(zmq.RCVHWM, 1)
-        self.socket.setsockopt(zmq.CONFLATE, 1)     # only keep most recent
+
+        self.event_dtype = np.dtype({
+            'names': ['x', 'y', 'p', 't'],
+            'formats': ['<u2', '<u2', '<i2', '<i8'],
+            'offsets': [0, 2, 4, 8],
+            'itemsize': 16
+        })
 
         # declare default parameters for QoS settings
         self.declare_parameter("prophesee_genx320.qos.reliability", "reliable")
@@ -42,8 +50,12 @@ class PropheseeGENX320Node(Node):
 
         # create publisher for event data
         self.publisher = self.create_publisher(Image, "prophesee_events", qos_profile)
-        timer_period = 0.01  # 1000 Hz
-        self.timer = self.create_timer(timer_period, self.read_event_data)
+        #timer_period = 0.001  # 1000 Hz
+        #self.timer = self.create_timer(timer_period, self.read_event_data)
+
+        self.thread = threading.Thread(target=self.read_event_data, daemon=True)
+        self.thread.start()
+        self.get_logger().info("High-speed background thread started.")
 
 
     def __del__(self):
@@ -107,15 +119,17 @@ class PropheseeGENX320Node(Node):
         )
 
 
-    def read_event_data(self):
+    def read_event_data_old(self):
         """
         Callback function to read event data from ZMQ socket and publish as ROS2 message.
 
         :return: None
         """
 
-        payload = self.socket.recv()  # auto-reassembled
-        events = msgpack.unpackb(payload, raw=False)
+        compressed_payload = self.socket.recv()  # auto-reassembled
+        payload = lz4.frame.decompress(compressed_payload)
+        #events = msgpack.unpackb(payload, raw=False)
+        events = msgpack.unpackb(payload, object_hook=m.decode)
 
         img = np.zeros((320, 320), dtype=np.uint8)
 
@@ -134,6 +148,44 @@ class PropheseeGENX320Node(Node):
         msg.step = img.strides[0]
         msg.data = img.tobytes()
         self.publisher.publish(msg)
+
+
+    def read_event_data(self):
+        """ Runs in its own thread as fast as possible """
+        while rclpy.ok():
+            try:
+                # Use NOBLOCK so we don't hang if the camera stops
+                compressed_payload = self.socket.recv(flags=zmq.NOBLOCK)
+                payload = lz4.frame.decompress(compressed_payload)
+                
+                # 3. FASTEST UNPACK: Direct memory view (No msgpack!)
+                events = np.frombuffer(payload, dtype=self.event_dtype)
+
+                # 4. VECTORIZED IMAGE CREATION (No Python loops!)
+                img = np.zeros((320, 320), dtype=np.uint8)
+                img.fill(127)  # Default to OFF (gray)
+                
+                # This one line replaces your entire 'for' loop:
+                # Logic: [y_coords, x_coords] = values
+                img[events['y'], events['x']] = np.where(events['p'] == 1, 255, 0)
+                #print(f"Received {len(events)} events.")
+
+                # create ROS2 Image message
+                msg = Image()
+                msg.header = Header()
+                msg.header.stamp = self.get_clock().now().to_msg()
+                msg.height = img.shape[0]
+                msg.width = img.shape[1]
+                msg.encoding = "mono8"
+                msg.is_bigendian = 0
+                msg.step = img.strides[0]
+                msg.data = img.tobytes()
+                self.publisher.publish(msg)
+
+            except zmq.Again:
+                continue # No data waiting
+            except Exception as e:
+                self.get_logger().error(f"Error: {e}")
 
 
 def main(args=None):

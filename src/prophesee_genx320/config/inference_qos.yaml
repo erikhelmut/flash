@@ -3,3 +3,9 @@ prophesee_genx320_node:
     prophesee_genx320.qos.reliability: reliable
     prophesee_genx320.qos.history: keep_last
     prophesee_genx320.qos.depth: 1
+
+detect_aruco_node:
+  ros__parameters:
+    prophesee_genx320.qos.reliability: reliable
+    prophesee_genx320.qos.history: keep_last
+    prophesee_genx320.qos.depth: 1

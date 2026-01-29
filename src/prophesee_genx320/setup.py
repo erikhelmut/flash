@@ -22,6 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             'prophesee_genx320_node = prophesee_genx320.prophesee_genx320_node:main',
+            'detect_aruco_node = prophesee_genx320.detect_aruco_node:main',
         ],
     },
 )
