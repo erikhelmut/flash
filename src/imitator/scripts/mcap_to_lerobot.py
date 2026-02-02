@@ -235,9 +235,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", help="Input folder containing mcap files")
     parser.add_argument("--output", help="LeRobot dataset output directory")
+    parser.add_argument("--task", type=str, default="flash")
     parser.add_argument("--fps", type=int, default=25)
     parser.add_argument("--subsample", type=int, default=4)
     args = parser.parse_args()
+
+    # TODO: REMOVE DEBUGGING folder
+    args.input = "/home/erik/flash/flash_data/"
+    args.output = "/home/erik/flash/test_lerobot/"
 
     # load end-effector calibration
     ee_offset = np.load("/home/erik/flash/src/optitrack/calibration/ee_offset.npy")
@@ -279,6 +284,11 @@ def main():
             "dtype": "video" if use_videos else "image",
             "names": ["height", "width", "channel"]
         },
+        # "observation.image.prophesee": {
+        #     "shape": (96, 96, 3),
+        #     "dtype": "video" if use_videos else "image",
+        #     "names": ["height", "width", "channel"]
+        # },
         "observation.image.nta_left": {
             "shape": (96, 96, 3),
             "dtype": "video" if use_videos else "image",
@@ -333,6 +343,7 @@ def main():
             rr = RosbagReader(mcap_file)
 
             nta_left = []; nta_right = []
+            nta_left_sum = []; nta_right_sum = []
             nta_left_timestamps = []; nta_right_timestamps = []
             nta_left_shape = None; nta_right_shape = None
 
@@ -353,12 +364,14 @@ def main():
 
                 if topic == "/nta_left":
                     nta_left.append(msg.data)
+                    nta_left_sum.append(np.sum(np.asarray(msg.data)))
                     nta_left_timestamps.append(convert_timestamp_to_float(msg.header.stamp))
                     if nta_left_shape is None:
                         nta_left_shape = (msg.height, msg.width, 1)
 
                 elif topic == "/nta_right":
                     nta_right.append(msg.data)
+                    nta_right_sum.append(np.sum(np.asarray(msg.data)))
                     nta_right_timestamps.append(convert_timestamp_to_float(msg.header.stamp))
                     if nta_right_shape is None:
                         nta_right_shape = (msg.height, msg.width, 1)
@@ -450,22 +463,39 @@ def main():
             optitrack_rot_z = fill_none_values(optitrack_rot_z)
             optitrack_rot_w = fill_none_values(optitrack_rot_w)
 
+            # convert lists to numpy arrays
+            nta_left = np.array(nta_left, dtype=np.uint16)
+            nta_right = np.array(nta_right, dtype=np.uint16)
+            nta_left_sum = np.array(nta_left_sum, dtype=np.float32)
+            nta_right_sum = np.array(nta_right_sum, dtype=np.float32)
+            realsense_d405_color_img = np.array(realsense_d405_color_img, dtype=np.uint8)
+            realsense_d405_depth_img = np.array(realsense_d405_depth_img, dtype=np.uint16)
+            realsense_d405_aruco_dist = np.array(realsense_d405_aruco_dist, dtype=np.float32)
+            optitrack_trans_x = np.array(optitrack_trans_x, dtype=np.float32)
+            optitrack_trans_y = np.array(optitrack_trans_y, dtype=np.float32)
+            optitrack_trans_z = np.array(optitrack_trans_z, dtype=np.float32)
+            optitrack_rot_x = np.array(optitrack_rot_x, dtype=np.float32)
+            optitrack_rot_y = np.array(optitrack_rot_y, dtype=np.float32)
+            optitrack_rot_z = np.array(optitrack_rot_z, dtype=np.float32)
+            optitrack_rot_w = np.array(optitrack_rot_w, dtype=np.float32)
+
+
             # -----------------------------
             # --- Write lerobot dataset ---
             # -----------------------------
 
             # reshape if necessary and ensure they are 1D time series first
-            # aruco_dist = realsense_d405_aruco_dist.reshape(-1, 1) if realsense_d405_aruco_dist.ndim == 1 else realsense_d405_aruco_dist
-            # optitrack_trans_x = optitrack_trans_x.reshape(-1, 1) if optitrack_trans_x.ndim == 1 else optitrack_trans_x
-            # optitrack_trans_y = optitrack_trans_y.reshape(-1, 1) if optitrack_trans_y.ndim == 1 else optitrack_trans_y
-            # optitrack_trans_z = optitrack_trans_z.reshape(-1, 1) if optitrack_trans_z.ndim == 1 else optitrack_trans_z
-            # optitrack_rot_x = optitrack_rot_x.reshape(-1, 1) if optitrack_rot_x.ndim == 1 else optitrack_rot_x
-            # optitrack_rot_y = optitrack_rot_y.reshape(-1, 1) if optitrack_rot_y.ndim == 1 else optitrack_rot_y
-            # optitrack_rot_z = optitrack_rot_z.reshape(-1, 1) if optitrack_rot_z.ndim == 1 else optitrack_rot_z
-            # optitrack_rot_w = optitrack_rot_w.reshape(-1, 1) if optitrack_rot_w.ndim == 1 else optitrack_rot_w
+            nta_left_sum = nta_left_sum.reshape(-1, 1) if nta_left_sum.ndim == 1 else nta_left_sum
+            nta_right_sum = nta_right_sum.reshape(-1, 1) if nta_right_sum.ndim == 1 else nta_right_sum
+            aruco_dist = realsense_d405_aruco_dist.reshape(-1, 1) if realsense_d405_aruco_dist.ndim == 1 else realsense_d405_aruco_dist
+            optitrack_trans_x = optitrack_trans_x.reshape(-1, 1) if optitrack_trans_x.ndim == 1 else optitrack_trans_x
+            optitrack_trans_y = optitrack_trans_y.reshape(-1, 1) if optitrack_trans_y.ndim == 1 else optitrack_trans_y
+            optitrack_trans_z = optitrack_trans_z.reshape(-1, 1) if optitrack_trans_z.ndim == 1 else optitrack_trans_z
+            optitrack_rot_x = optitrack_rot_x.reshape(-1, 1) if optitrack_rot_x.ndim == 1 else optitrack_rot_x
+            optitrack_rot_y = optitrack_rot_y.reshape(-1, 1) if optitrack_rot_y.ndim == 1 else optitrack_rot_y
+            optitrack_rot_z = optitrack_rot_z.reshape(-1, 1) if optitrack_rot_z.ndim == 1 else optitrack_rot_z
+            optitrack_rot_w = optitrack_rot_w.reshape(-1, 1) if optitrack_rot_w.ndim == 1 else optitrack_rot_w
 
-            nta_left_sum = np.sum(nta_left, axis=1)
-            nta_right_sum = np.sum(nta_right, axis=1)
 
             nta_left = np.array([
                 np.tile(frame, (8, 1))
@@ -478,6 +508,7 @@ def main():
             ], dtype=np.uint8)
 
             # convert from bgr to rgb
+            realsense_d405_color_img = np.array([np.array(img, dtype=np.uint8).reshape(realsense_d405_color_img_shape) for img in realsense_d405_color_img], dtype=np.uint8)
             realsense_d405_color_img = np.array([cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) for frame in realsense_d405_color_img], dtype=np.uint8)
 
             # resize image to a smaller size
@@ -591,7 +622,7 @@ def main():
                     "observation.image.nta_right": nta_right_data[i],
                     "action": action_data[i].astype(np.float32),
                 }
-                dataset.add_frame(frame_for_lerobot, task=task_name)
+                dataset.add_frame(frame_for_lerobot, task=args.task)
 
             dataset.save_episode()  # saves the buffered frames as one episode
             print(f"  Saved episode from {mcap_file} to LeRobotDataset.")
