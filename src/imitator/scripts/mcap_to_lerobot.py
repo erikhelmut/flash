@@ -16,9 +16,8 @@ import shutil
 from scipy.spatial.transform import Rotation
 from transformation import Transformation
 
-from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.common.datasets.utils import DEFAULT_FEATURES
-
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.datasets.utils import DEFAULT_FEATURES
 
 
 # --- ROSBAG READER UTILS ---
@@ -241,8 +240,8 @@ def main():
     args = parser.parse_args()
 
     # TODO: REMOVE DEBUGGING folder
-    args.input = "/home/erik/flash/flash_data/"
-    args.output = "/home/erik/flash/test_lerobot/"
+    args.input = "/home/erik/flash/data/"
+    args.output = "/home/erik/flash/testlerobot/"
 
     # load end-effector calibration
     ee_offset = np.load("/home/erik/flash/src/optitrack/calibration/ee_offset.npy")
@@ -433,6 +432,8 @@ def main():
             # filter lists based on timestamps of reference clock timestamps
             nta_left = time_filter_list(reference_clock, nta_left_timestamps, nta_left, "nta_left")
             nta_right = time_filter_list(reference_clock, nta_right_timestamps, nta_right, "nta_right")
+            nta_left_sum = time_filter_list(reference_clock, nta_left_timestamps, nta_left_sum, "nta_left_sum")
+            nta_right_sum = time_filter_list(reference_clock, nta_right_timestamps, nta_right_sum, "nta_right_sum")
             nta_left_timestamps = copy.deepcopy(reference_clock)
             nta_right_timestamps = copy.deepcopy(reference_clock)
 
@@ -621,8 +622,9 @@ def main():
                     "observation.image.nta_left": nta_left_data[i],
                     "observation.image.nta_right": nta_right_data[i],
                     "action": action_data[i].astype(np.float32),
+                    "task": args.task,
                 }
-                dataset.add_frame(frame_for_lerobot, task=args.task)
+                dataset.add_frame(frame_for_lerobot)
 
             dataset.save_episode()  # saves the buffered frames as one episode
             print(f"  Saved episode from {mcap_file} to LeRobotDataset.")
