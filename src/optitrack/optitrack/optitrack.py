@@ -3,13 +3,13 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from transformation import Transformation
 
-from natnet_client import DataDescriptions, DataFrame, NatNetClient
+from natnet import DataDescriptions, DataFrame, NatNetClient
 
 
 SERVER_IP_ADDRESS = "10.90.90.5"
 LOCAL_IP_ADDRESS = "10.90.90.21"
 
-END_EFFECTOR = "erik_ee"
+END_EFFECTOR = "erik-ee"
 
 
 class OptiTrack:
@@ -17,7 +17,7 @@ class OptiTrack:
     def __init__(self):
         self._transformation = None
         try:
-            self._transformation = np.load("/home/erik/impact/src/optitrack/calibration/tf_calibration.npy")
+            self._transformation = np.load("/home/erik/flash/src/optitrack/calibration/tf_calibration.npy")
             print("Calibration loaded.")
         except:
             print("No saved calibration found!")

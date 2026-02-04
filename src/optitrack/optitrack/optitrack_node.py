@@ -122,7 +122,7 @@ class OptitrackNode(Node):
         from franka_panda.panda_real import PandaReal
         import yaml
 
-        with open("/home/erik/impact/src/franka_panda/config/panda_config.yaml", "r") as f:
+        with open("/home/erik/flash/src/franka_panda/config/panda_config.yaml", "r") as f:
             config = yaml.safe_load(f)
         self.panda = PandaReal(config)
 
@@ -134,8 +134,8 @@ class OptitrackNode(Node):
         :return: None
         """
 
-        self.ee_offset = np.load("/home/erik/impact/src/optitrack/calibration/ee_offset_90deg.npy")  # old: translate_ot_panda
-        self.ee_rotation = np.load("/home/erik/impact/src/optitrack/calibration/ee_rotation_90deg.npy")  # old: rot_ori_ot_panda
+        self.ee_offset = np.load("/home/erik/flash/src/optitrack/calibration/ee_offset.npy")  # old: translate_ot_panda
+        self.ee_rotation = np.load("/home/erik/flash/src/optitrack/calibration/ee_rotation.npy")  # old: rot_ori_ot_panda
 
 
     def get_current_state(self):
