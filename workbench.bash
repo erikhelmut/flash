@@ -14,14 +14,14 @@ then
 
     # first pane
     tmux rename-window -t 0 "main"
-    tmux send-keys -t $SESSION:0 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:0 "conda activate flash" C-m
     tmux send-keys -t $SESSION:0 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:0 "clear" C-m
 
 
     # second pane
     tmux new-window -t $SESSION:1 -n "foxglove"
-    tmux send-keys -t $SESSION:1 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:1 "conda activate flash" C-m
     tmux send-keys -t $SESSION:1 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:1 "clear" C-m
     tmux send-keys -t $SESSION:1 "ros2 launch foxglove_bridge foxglove_bridge_launch.xml address:=127.0.0.1" C-m
@@ -34,22 +34,22 @@ then
     tmux split-window -t $SESSION:2.0 -v
 
     tmux select-pane -t $SESSION:2.0
-    tmux send-keys -t $SESSION:2.0 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:2.0 "conda activate flash" C-m
     tmux send-keys -t $SESSION:2.0 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:2.0 "clear" C-m
 
     tmux select-pane -t $SESSION:2.1
-    tmux send-keys -t $SESSION:2.1 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:2.1 "conda activate flash" C-m
     tmux send-keys -t $SESSION:2.1 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:2.1 "clear" C-m
 
     tmux select-pane -t $SESSION:2.2
-    tmux send-keys -t $SESSION:2.2 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:2.2 "conda activate flash" C-m
     tmux send-keys -t $SESSION:2.2 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:2.2 "clear" C-m
 
     tmux select-pane -t $SESSION:2.3
-    tmux send-keys -t $SESSION:2.3 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:2.3 "conda activate flash" C-m
     tmux send-keys -t $SESSION:2.3 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:2.3 "clear" C-m
     tmux send-keys -t $SESSION:2.3 "htop" C-m
@@ -57,7 +57,7 @@ then
 
     # fourth pane
     tmux new-window -t $SESSION:3 -n "bash"
-    tmux send-keys -t $SESSION:3 "conda activate flash312" C-m
+    tmux send-keys -t $SESSION:3 "conda activate flash" C-m
     tmux send-keys -t $SESSION:3 "source install/setup.bash" C-m
     tmux send-keys -t $SESSION:3 "clear" C-m
 
