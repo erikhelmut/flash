@@ -496,8 +496,8 @@ def main():
     args = parser.parse_args()
 
     # TODO: remove hardcoded paths for production
-    args.input = "/home/erik/flash/data/"
-    args.output = "/home/erik/flash/cupstacking/"
+    args.input = "/home/erik/flash/rosbags/"
+    args.output = "/home/erik/flash/cupstacking_v2/"
 
     # Load Calibration
     calib_path = Path("/home/erik/flash/src/optitrack/calibration/")

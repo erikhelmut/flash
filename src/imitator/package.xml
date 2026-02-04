@@ -7,6 +7,13 @@
   <maintainer email="erik.helmut1@gmail.com">erik</maintainer>
   <license>Apache-2.0</license>
 
+  <exec_depend>actuated_umi</exec_depend>
+  <exec_depend>neuromorphic_tactile_array</exec_depend>
+  <exec_depend>realsense_d405</exec_depend>
+  <exec_depend>aruco_msgs</exec_depend>
+  <exec_depend>optitrack</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>
