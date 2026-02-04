@@ -26,7 +26,7 @@ setup(
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
-            'nts_node = neuromorphic_tactile_array.nts_node:main',
+            'nta_node = neuromorphic_tactile_array.nta_node:main',
         ],
     },
 )
