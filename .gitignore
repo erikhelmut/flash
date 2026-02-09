@@ -3,3 +3,5 @@ build/
 install/
 log/
 data/
+src/imitator/outputs/
+.DS_Store

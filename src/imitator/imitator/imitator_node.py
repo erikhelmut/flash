@@ -87,7 +87,7 @@ class IMITATOR:
             self.device = torch.device("cpu")
 
         # provide the hugging face repo id or path to a local outputs/train folder
-        pretrained_policy_path = Path("src/imitator/outputs/train/2026-02-03/14-54-03_diffusion/checkpoints/060000/pretrained_model")
+        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/train/2026-02-05/10-58-53_diffusion/checkpoints/last/pretrained_model")
 
         # initialize the policy
         self.policy = DiffusionPolicy.from_pretrained(pretrained_policy_path)
@@ -456,12 +456,15 @@ class IMITATORNode(Node):
             #         if self.total_h >= 0.1:
             #             self.initial_movement_done = True
             # else:
-            self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
+            #self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
+
+            print(goal_ee_pos)
 
             # msg = GoalForceController()
-            # #msg.goal_force = float(goal_force)
-            # goal_force_filtered = self.filt.filter(goal_force)
+            #msg.goal_force = float(goal_force)
+            # goal_force_filtered = self.filt.filter(goal_nta_left)
             # msg.goal_force = float(goal_force_filtered)
+            # msg.goal_force = float(0.0) # for testing
             # msg.goal_position = int(self.m * goal_distance + self.c)
             # self.imitator_publisher.publish(msg)
 
