@@ -87,7 +87,7 @@ class IMITATOR:
             self.device = torch.device("cpu")
 
         # provide the hugging face repo id or path to a local outputs/train folder
-        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/train/2026-02-05/10-58-53_diffusion/checkpoints/last/pretrained_model")
+        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/train/2026-02-10/13-24-04_diffusion/checkpoints/last/pretrained_model")
 
         # initialize the policy
         self.policy = DiffusionPolicy.from_pretrained(pretrained_policy_path)
@@ -444,7 +444,9 @@ class IMITATORNode(Node):
             self.ee_ori = self.panda.end_effector_orientation
 
             # make prediction using the diffusion policy
-            goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_left, self.nta_left_sum, self.nta_right, self.nta_right_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
+            goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_right, self.nta_right_sum, self.nta_left, self.nta_left_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
+
+            print(f"Predicted goal distance: {goal_ee_pos}")
 
             # move the robot
             # if self.initial_movement_done is False:
@@ -456,9 +458,7 @@ class IMITATORNode(Node):
             #         if self.total_h >= 0.1:
             #             self.initial_movement_done = True
             # else:
-            #self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
-
-            print(goal_ee_pos)
+            self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
 
             # msg = GoalForceController()
             #msg.goal_force = float(goal_force)
