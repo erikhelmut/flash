@@ -1,8 +1,19 @@
 #!/bin/bash
 
-# Define variables
-RECORD_DIR="/home/erik/flash/data/rosbags/$(date +%Y-%m-%d_%H-%M-%S)"
-LAUNCH_FILE="imitator flash_launch.py"
+if [ -z "$1" ]; then
+    echo "ERROR: No folder name provided."
+    echo "Usage: ./record_rosbag.bash <session_name>"
+    exit 1
+fi
+
+FOLDER_NAME="$1"
+BASE_DIR="/home/erik/flash/data/rosbags"
+TASK_DIR="$BASE_DIR/$FOLDER_NAME"
+RECORD_DIR="$TASK_DIR/$(date +%Y-%m-%d_%H-%M-%S)"
+LAUNCH_FILE="imitator umi_launch.py"
+
+# Create base directory if needed
+mkdir -p "$TASK_DIR"
 
 # Start the ROS 2 launch file
 echo "Launching: $LAUNCH_FILE"
