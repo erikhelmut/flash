@@ -24,6 +24,7 @@ setup(
         'console_scripts': [
             'force_control = imitator.force_control:main',
             'imitator_node = imitator.imitator_node:main',
+            'imitator_node_notac = imitator.imitator_node_notac:main',
         ],
     },
 )

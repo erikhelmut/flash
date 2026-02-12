@@ -153,21 +153,22 @@ class ForceControl(Node):
         if self.goal_force is not None and self.current_position is not None and self.goal_position is not None:
 
             #if self.goal_force <= -0.5 and self.current_force <= -0.5:
+            if self.goal_force != 0.0:
                 
-            # calculate force error
-            force_error = -1 * (self.goal_force - self.current_force)
-            print("Force error: ", force_error)
+                # calculate force error
+                force_error = -1 * (self.goal_force - self.current_force)
+                print("Force error: ", force_error)
 
-            # compute position adjustment
-            position_adjustment = self.pid(-1 * force_error)
+                # compute position adjustment
+                position_adjustment = self.pid(-1 * force_error)
 
-            # update goal position
-            self.set_goal_position(self.current_position + position_adjustment)
+                # update goal position
+                self.set_goal_position(self.current_position + position_adjustment)
 
-            # else:
+            else:
                 
-            #     # update goal position
-            #     self.set_goal_position(self.goal_position)
+                # update goal position
+                self.set_goal_position(self.goal_position)
 
 
 def main(args=None):

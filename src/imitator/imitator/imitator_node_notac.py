@@ -15,6 +15,7 @@ import time
 import cv2
 import numpy as np
 import torch
+from safetensors.torch import load_file
 
 import copy
 from collections import deque
@@ -24,6 +25,9 @@ from franka_panda.panda_real import PandaReal
 
 from scipy.spatial.transform import Rotation
 
+from lerobot.policies.diffusion.configuration_diffusion import DiffusionConfig
+from lerobot.configs.policies import PreTrainedConfig
+from lerobot.policies.diffusion.processor_diffusion import make_diffusion_pre_post_processors
 from lerobot.policies.diffusion.modeling_diffusion import DiffusionPolicy
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
@@ -86,17 +90,29 @@ class IMITATOR:
         else:
             self.device = torch.device("cpu")
 
-        # provide the hugging face repo id or path to a local outputs/train folder
-        pretrained_policy_path = Path("/home/erik/flash/outputs/train/2026-02-11/12-56-19_diffusion/checkpoints/last/pretrained_model")
+        # 1. setup the config (match the settings used during training)
+        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/cupstacking_notac/checkpoints/last/pretrained_model")
+        config = PreTrainedConfig.from_pretrained(pretrained_policy_path, local_files_only=True)
 
-        # initialize the policy
-        self.policy = DiffusionPolicy.from_pretrained(pretrained_policy_path)
+        self.pre_processor, self.post_processor = make_diffusion_pre_post_processors(config)
+        pre_stats = load_file(pretrained_policy_path /"policy_preprocessor_step_3_normalizer_processor.safetensors")
+        post_stats = load_file(pretrained_policy_path / "policy_postprocessor_step_0_unnormalizer_processor.safetensors")
+        self.pre_processor.steps[3].load_state_dict(pre_stats)
+        self.post_processor.steps[0].load_state_dict(post_stats)
 
-        # reset the policy to prepare for rollout
-        self.policy.reset()
+        # 2. instantiate the policy
+        self.policy = DiffusionPolicy(config)
+
+        # 3. load the weights
+        state_dict = load_file(str(pretrained_policy_path / "model.safetensors"), device="cpu")
+        self.policy.load_state_dict(state_dict)
+
+        # 4. set the policy to evaluation mode and send it to the specified device
+        self.policy.eval()
+        self.policy.to(self.device)
 
 
-    def make_prediction(self, nta_left, nta_left_sum, nta_right, nta_right_sum, gripper_width, rs_d405_img, ee_pos, ee_ori):
+    def make_prediction(self, gripper_width, rs_d405_img, ee_pos, ee_ori):
         """
         Make prediction using the diffusion policy.
 
@@ -112,7 +128,7 @@ class IMITATOR:
         """
 
         # extract the batch data
-        raw_state = [nta_left_sum, nta_right_sum, gripper_width]
+        raw_state = [gripper_width]
         raw_state.extend(ee_pos.astype(np.float32).tolist())
 
         # convert the end-effector orientation to a 6D feature representation
@@ -123,55 +139,50 @@ class IMITATOR:
         # convert the state to a tensor and add batch dimension
         state = torch.tensor(raw_state).unsqueeze(0).float()
         
+        rs_d405_img[:] = 0
         image = torch.from_numpy(rs_d405_img).float()
         image = image.permute(0, 3, 1, 2)
-
-        nta_left = torch.from_numpy(nta_left).float()
-        nta_left = nta_left.permute(0, 3, 1, 2)
-        nta_right = torch.from_numpy(nta_right).float()
-        nta_right = nta_right.permute(0, 3, 1, 2)
 
         # send data tensors from CPU to GPU
         state = state.to(self.device, non_blocking=True)
         image = image.to(self.device, non_blocking=True)
-        nta_left = nta_left.to(self.device, non_blocking=True)
-        nta_right = nta_right.to(self.device, non_blocking=True)
 
+ 
         # create the policy input dictionary
         observation = {
             "observation.state": state,
             "observation.image.realsense": image,
-            "observation.image.nta_left": nta_left,
-            "observation.image.nta_right": nta_right,
         }
+
+        observation = self.pre_processor(observation)
 
         # predict the next action with respect to the current observation
         # the policy internaly handles the queue of observations and actions
         with torch.inference_mode():
             policy_action = self.policy.select_action(observation)
 
-        goal_nta_left = policy_action.squeeze(0)[0].to("cpu").numpy()
-        goal_nta_right = policy_action.squeeze(0)[1].to("cpu").numpy()
-        goal_distance = policy_action.squeeze(0)[2].to("cpu").numpy()
+        policy_action = self.post_processor(policy_action)
 
-        goal_x_pos = policy_action.squeeze(0)[3].to("cpu").numpy()
-        goal_y_pos = policy_action.squeeze(0)[4].to("cpu").numpy()
-        goal_z_pos = policy_action.squeeze(0)[5].to("cpu").numpy()
+        goal_distance = policy_action.squeeze(0)[0].to("cpu").numpy()
+
+        goal_x_pos = policy_action.squeeze(0)[1].to("cpu").numpy()
+        goal_y_pos = policy_action.squeeze(0)[2].to("cpu").numpy()
+        goal_z_pos = policy_action.squeeze(0)[3].to("cpu").numpy()
         goal_ee_pos = np.array([goal_x_pos, goal_y_pos, goal_z_pos])
 
-        goal_f0_rot = policy_action.squeeze(0)[6].to("cpu").numpy()
-        goal_f1_rot = policy_action.squeeze(0)[7].to("cpu").numpy()
-        goal_f2_rot = policy_action.squeeze(0)[8].to("cpu").numpy()
-        goal_f3_rot = policy_action.squeeze(0)[9].to("cpu").numpy()
-        goal_f4_rot = policy_action.squeeze(0)[10].to("cpu").numpy()
-        goal_f5_rot = policy_action.squeeze(0)[11].to("cpu").numpy()
+        goal_f0_rot = policy_action.squeeze(0)[4].to("cpu").numpy()
+        goal_f1_rot = policy_action.squeeze(0)[5].to("cpu").numpy()
+        goal_f2_rot = policy_action.squeeze(0)[6].to("cpu").numpy()
+        goal_f3_rot = policy_action.squeeze(0)[7].to("cpu").numpy()
+        goal_f4_rot = policy_action.squeeze(0)[8].to("cpu").numpy()
+        goal_f5_rot = policy_action.squeeze(0)[9].to("cpu").numpy()
         goal_ee_ori = np.array([goal_f0_rot, goal_f1_rot, goal_f2_rot, goal_f3_rot, goal_f4_rot, goal_f5_rot])
 
         # convert the goal end-effector orientation to a quaternion
         goal_ee_ori = feature_to_rotation(goal_ee_ori)
         goal_ee_ori = goal_ee_ori.as_quat()
 
-        return goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori
+        return goal_distance, goal_ee_pos, goal_ee_ori
 
 
 class IMITATORNode(Node):
@@ -444,9 +455,9 @@ class IMITATORNode(Node):
             self.ee_ori = self.panda.end_effector_orientation
 
             # make prediction using the diffusion policy
-            goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_right, self.nta_right_sum, self.nta_left, self.nta_left_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
+            goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
 
-            print(f"Predicted goal distance: {goal_ee_pos}")
+            print(f"Predicted goal position: {goal_ee_pos}", f" Current position: {self.ee_pos}")
 
             # move the robot
             # if self.initial_movement_done is False:
@@ -458,15 +469,15 @@ class IMITATORNode(Node):
             #         if self.total_h >= 0.1:
             #             self.initial_movement_done = True
             # else:
-            #self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
+            self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
 
-            # msg = GoalForceController()
+            msg = GoalForceController()
             #msg.goal_force = float(goal_force)
-            # goal_force_filtered = self.filt.filter(goal_nta_left)
-            # msg.goal_force = float(goal_force_filtered)
-            # msg.goal_force = float(0.0) # for testing
-            # msg.goal_position = int(self.m * goal_distance + self.c)
-            # self.imitator_publisher.publish(msg)
+            #goal_force_filtered = self.filt.filter(goal_nta_left)
+            #msg.goal_force = float(goal_force_filtered)
+            msg.goal_force = float(0.0) # for testing
+            msg.goal_position = int(self.m * goal_distance + self.c - 200)
+            self.imitator_publisher.publish(msg)
 
             # # add current and goal forces to the rollout data
             # if self.store:
@@ -482,21 +493,21 @@ class IMITATORNode(Node):
         :return: None
         """
         
-        if self.rollout_current_force and self.rollout_goal_force and self.rollout_goal_force_filtered and self.store:
+        # if self.rollout_current_force and self.rollout_goal_force and self.rollout_goal_force_filtered and self.store:
             
-            current_force = np.array(self.rollout_current_force)
-            goal_force = np.array(self.rollout_goal_force)
-            goal_force_filtered = np.array(self.rollout_goal_force_filtered)
+        #     current_force = np.array(self.rollout_current_force)
+        #     goal_force = np.array(self.rollout_goal_force)
+        #     goal_force_filtered = np.array(self.rollout_goal_force_filtered)
             
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            run = "planting_task/force_dist_control/initial_pos_v4/fc"
+        #     timestamp = time.strftime("%Y%m%d_%H%M%S")
+        #     run = "planting_task/force_dist_control/initial_pos_v4/fc"
 
-            filename = f"/home/erik/flash/src/imitator/rollouts/{run}_{timestamp}.npz"
+        #     filename = f"/home/erik/flash/src/imitator/rollouts/{run}_{timestamp}.npz"
 
-            np.savez(filename,
-                 current_force=current_force,
-                 goal_force=goal_force,
-                 goal_force_filtered=goal_force_filtered)
+        #     np.savez(filename,
+        #          current_force=current_force,
+        #          goal_force=goal_force,
+        #          goal_force_filtered=goal_force_filtered)
 
         super().destroy_node()
 
