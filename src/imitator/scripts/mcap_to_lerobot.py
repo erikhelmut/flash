@@ -266,26 +266,22 @@ def read_and_sync_mcap(mcap_file, p_rb_ee, q_rb_ee):
         for topic, msg, _ in rr.read_messages():
 
             if topic == "/nta_left":
-                # 1. Convert the raw byte buffer back to uint16
-                # Use frombuffer because msg.data is a byte array
                 raw_data = np.frombuffer(msg.data, dtype=np.uint16)
-                
-                # 2. Reshape using the message metadata
                 image_16bit = raw_data.reshape((msg.height, msg.width))
-                
-                # Store the processed data
-                data["nta_left"].append(image_16bit) # Store the actual image, not the raw bytes
+                data["nta_left"].append(image_16bit)
                 data["nta_left_sum"].append(np.sum(image_16bit))
                 data["nta_left_ts"].append(convert_timestamp_to_float(msg.header.stamp))
-
                 if shapes["nta_left"] is None: 
                     shapes["nta_left"] = (msg.height, msg.width, 1)
 
             elif topic == "/nta_right":
-                data["nta_right"].append(msg.data)
-                data["nta_right_sum"].append(np.sum(np.asarray(msg.data)))
+                raw_data = np.frombuffer(msg.data, dtype=np.uint16)
+                image_16bit = raw_data.reshape((msg.height, msg.width))
+                data["nta_right"].append(image_16bit)
+                data["nta_right_sum"].append(np.sum(image_16bit))
                 data["nta_right_ts"].append(convert_timestamp_to_float(msg.header.stamp))
-                if shapes["nta_right"] is None: shapes["nta_right"] = (msg.height, msg.width, 1)
+                if shapes["nta_right"] is None: 
+                    shapes["nta_right"] = (msg.height, msg.width, 1)
 
             elif topic == "/realsense_d405_color_image":
                 data["rs_color"].append(msg.data)
@@ -415,18 +411,11 @@ def add_episode_to_dataset(dataset, synced_data, task_name, subsample=1):
         # scale
         scaled = (frames - clim[0]) * (255 / (clim[1] - clim[0]))
         scaled = np.clip(scaled, 0, 255)
-        import matplotlib.pyplot as plt
-        print(frames.shape)
-        plt.imshow(scaled[0], cmap="inferno")
-        plt.show()
         # resize
         resized = np.array([
             cv2.resize(f, (96, 96), interpolation=cv2.INTER_AREA) for f in scaled
         ], dtype=np.uint8)
         # stack to (N, 96, 96, 3)
-
-        plt.imshow(resized[0], cmap="inferno")
-        plt.show()
         return np.stack([resized, resized, resized], axis=-1)
     
     resized_nta_left = process_force_img(synced_data["nta_left"])

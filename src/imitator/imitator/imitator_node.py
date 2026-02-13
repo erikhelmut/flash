@@ -15,6 +15,7 @@ import time
 import cv2
 import numpy as np
 import torch
+from safetensors.torch import load_file
 
 import copy
 from collections import deque
@@ -24,6 +25,9 @@ from franka_panda.panda_real import PandaReal
 
 from scipy.spatial.transform import Rotation
 
+from lerobot.policies.diffusion.configuration_diffusion import DiffusionConfig
+from lerobot.configs.policies import PreTrainedConfig
+from lerobot.policies.diffusion.processor_diffusion import make_diffusion_pre_post_processors
 from lerobot.policies.diffusion.modeling_diffusion import DiffusionPolicy
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
@@ -86,14 +90,26 @@ class IMITATOR:
         else:
             self.device = torch.device("cpu")
 
-        # provide the hugging face repo id or path to a local outputs/train folder
-        pretrained_policy_path = Path("/home/erik/flash/outputs/train/2026-02-11/12-56-19_diffusion/checkpoints/last/pretrained_model")
+        # 1. setup the config (match the settings used during training)
+        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/cupstacking/checkpoints/last/pretrained_model")
+        config = PreTrainedConfig.from_pretrained(pretrained_policy_path, local_files_only=True)
 
-        # initialize the policy
-        self.policy = DiffusionPolicy.from_pretrained(pretrained_policy_path)
+        self.pre_processor, self.post_processor = make_diffusion_pre_post_processors(config)
+        pre_stats = load_file(pretrained_policy_path /"policy_preprocessor_step_3_normalizer_processor.safetensors")
+        post_stats = load_file(pretrained_policy_path / "policy_postprocessor_step_0_unnormalizer_processor.safetensors")
+        self.pre_processor.steps[3].load_state_dict(pre_stats)
+        self.post_processor.steps[0].load_state_dict(post_stats)
 
-        # reset the policy to prepare for rollout
-        self.policy.reset()
+        # 2. instantiate the policy
+        self.policy = DiffusionPolicy(config)
+
+        # 3. load the weights
+        state_dict = load_file(str(pretrained_policy_path / "model.safetensors"), device="cpu")
+        self.policy.load_state_dict(state_dict)
+
+        # 4. set the policy to evaluation mode and send it to the specified device
+        self.policy.eval()
+        self.policy.to(self.device)
 
 
     def make_prediction(self, nta_left, nta_left_sum, nta_right, nta_right_sum, gripper_width, rs_d405_img, ee_pos, ee_ori):
@@ -145,10 +161,14 @@ class IMITATOR:
             "observation.image.nta_right": nta_right,
         }
 
+        observation = self.pre_processor(observation)
+
         # predict the next action with respect to the current observation
         # the policy internaly handles the queue of observations and actions
         with torch.inference_mode():
             policy_action = self.policy.select_action(observation)
+
+        policy_action = self.post_processor(policy_action)
 
         goal_nta_left = policy_action.squeeze(0)[0].to("cpu").numpy()
         goal_nta_right = policy_action.squeeze(0)[1].to("cpu").numpy()
@@ -341,17 +361,20 @@ class IMITATORNode(Node):
         :return: None
         """
 
-        self.nta_left_sum = np.sum(np.asarray(msg.data))
+        raw_data = np.frombuffer(msg.data, dtype=np.uint16)
+        image_16bit = raw_data.reshape((msg.height, msg.width))
+
+        self.nta_left_sum = np.sum(image_16bit)
 
         clim=(0, 1000)
         # scale
-        scaled = (np.array(msg.data) - clim[0]) * (255 / (clim[1] - clim[0]))
+        scaled = (image_16bit - clim[0]) * (255 / (clim[1] - clim[0]))
         scaled = np.clip(scaled, 0, 255)
         # resize
         resized = np.array([
             cv2.resize(scaled, (96, 96), interpolation=cv2.INTER_AREA)
         ], dtype=np.uint8)
-        # stack to (N, 96, 96, 3)
+        # stack to (96, 96, 3)
         self.nta_left = np.stack([resized, resized, resized], axis=-1)
 
 
@@ -363,16 +386,20 @@ class IMITATORNode(Node):
         :return: None
         """
 
-        self.nta_right_sum = np.sum(np.asarray(msg.data))
+        raw_data = np.frombuffer(msg.data, dtype=np.uint16)
+        image_16bit = raw_data.reshape((msg.height, msg.width))
+
+        self.nta_right_sum = np.sum(image_16bit)
+
         clim=(0, 1000)
         # scale
-        scaled = (np.array(msg.data) - clim[0]) * (255 / (clim[1] - clim[0]))
+        scaled = (image_16bit - clim[0]) * (255 / (clim[1] - clim[0]))
         scaled = np.clip(scaled, 0, 255)
         # resize
         resized = np.array([
             cv2.resize(scaled, (96, 96), interpolation=cv2.INTER_AREA)
         ], dtype=np.uint8)
-        # stack to (N, 96, 96, 3)
+        # stack to (96, 96, 3)
         self.nta_right = np.stack([resized, resized, resized], axis=-1)
 
 
@@ -446,8 +473,6 @@ class IMITATORNode(Node):
             # make prediction using the diffusion policy
             goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_right, self.nta_right_sum, self.nta_left, self.nta_left_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
 
-            print(f"Predicted goal distance: {goal_ee_pos}")
-
             # move the robot
             # if self.initial_movement_done is False:
             #     # check if force is below -1 at least
@@ -458,15 +483,15 @@ class IMITATORNode(Node):
             #         if self.total_h >= 0.1:
             #             self.initial_movement_done = True
             # else:
-            #self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.02, goal_ori=goal_ee_ori, asynch=True) # 0.02
+            self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.01, goal_ori=goal_ee_ori, asynch=True) # 0.02
 
-            # msg = GoalForceController()
+            msg = GoalForceController()
             #msg.goal_force = float(goal_force)
             # goal_force_filtered = self.filt.filter(goal_nta_left)
             # msg.goal_force = float(goal_force_filtered)
-            # msg.goal_force = float(0.0) # for testing
-            # msg.goal_position = int(self.m * goal_distance + self.c)
-            # self.imitator_publisher.publish(msg)
+            msg.goal_force = float(0.0) # for testing
+            msg.goal_position = int(self.m * goal_distance + self.c - 200)
+            self.imitator_publisher.publish(msg)
 
             # # add current and goal forces to the rollout data
             # if self.store:
