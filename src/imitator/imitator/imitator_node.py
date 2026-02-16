@@ -91,7 +91,7 @@ class IMITATOR:
             self.device = torch.device("cpu")
 
         # 1. setup the config (match the settings used during training)
-        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/cupstacking/checkpoints/last/pretrained_model")
+        pretrained_policy_path = Path("/home/erik/flash/src/imitator/outputs/cupstacking_16022026/checkpoints/last/pretrained_model")
         config = PreTrainedConfig.from_pretrained(pretrained_policy_path, local_files_only=True)
 
         self.pre_processor, self.post_processor = make_diffusion_pre_post_processors(config)
@@ -214,7 +214,7 @@ class IMITATORNode(Node):
         self.panda = PandaReal(config)
 
         # load calibration parameters for gripper
-        self.m, self.c = np.load("/home/erik/flash/src/actuated_umi/calibration/20260204-144401.npy")
+        self.m, self.c = np.load("/home/erik/flash/src/actuated_umi/calibration/20260216-161549.npy")
 
         # store current force and image in class variables
         self.nta_left = None
