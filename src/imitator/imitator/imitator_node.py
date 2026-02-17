@@ -471,7 +471,7 @@ class IMITATORNode(Node):
             self.ee_ori = self.panda.end_effector_orientation
 
             # make prediction using the diffusion policy
-            goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_right, self.nta_right_sum, self.nta_left, self.nta_left_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
+            goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_left, self.nta_left_sum, self.nta_right, self.nta_right_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
 
             # move the robot
             # if self.initial_movement_done is False:
@@ -486,11 +486,11 @@ class IMITATORNode(Node):
             self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.01, goal_ori=goal_ee_ori, asynch=True) # 0.02
 
             msg = GoalForceController()
-            #msg.goal_force = float(goal_force)
-            # goal_force_filtered = self.filt.filter(goal_nta_left)
-            # msg.goal_force = float(goal_force_filtered)
-            msg.goal_force = float(0.0) # for testing
-            msg.goal_position = int(self.m * goal_distance + self.c - 200)
+            msg.goal_force = float((goal_nta_left + goal_nta_right) / 2.0)
+            goal_force_filtered = self.filt.filter(msg.goal_force)
+            msg.goal_force = float(goal_force_filtered)
+            #msg.goal_force = float(0.0) # for testing
+            msg.goal_position = int(self.m * goal_distance + self.c)
             self.imitator_publisher.publish(msg)
 
             # # add current and goal forces to the rollout data

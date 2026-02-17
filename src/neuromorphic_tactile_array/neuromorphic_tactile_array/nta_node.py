@@ -20,6 +20,10 @@ class NeuromorphicTactileArrayNode(Node):
 
         super().__init__("neuromorphic_tactile_array_node")
 
+        # define setup parameters
+        self.declare_parameter("swap_sensors", False)
+        self.swap_sensors = self.get_parameter("swap_sensors").value
+
         # define sensor parameters
         self.ROWS, self.COLS = 32, 32
         self.S_ROWS, self.S_COLS = 8, 64   # each sensor’s physical layout
@@ -142,13 +146,15 @@ class NeuromorphicTactileArrayNode(Node):
 
                 s1, s2 = reconstruct(grid2d)
 
-                # flip vertically to match physical layout
+                # flip vertically and horizontally to match physical layout
                 s1 = np.flipud(s1)
-
-                #s2 = np.flipud(s2)
+                s1 = np.fliplr(s1)
 
                 # flip sensor 2 along horizontal axis to match physical layout
                 s2 = np.fliplr(s2)
+
+                if self.swap_sensors:
+                    s1, s2 = s2, s1
 
                 # convert s1 and s2 to Image messages and publish
                 msg_left = Image()

@@ -11,6 +11,9 @@ def generate_launch_description():
     neuromorphic_tactile_array_share_dir = get_package_share_directory("neuromorphic_tactile_array")
     neuromorphic_tactile_array_config_file = os.path.join(neuromorphic_tactile_array_share_dir, "config", "inference_qos.yaml")
 
+    prophesee_genx320_share_dir = get_package_share_directory("prophesee_genx320")
+    prophesee_genx320_config_file = os.path.join(prophesee_genx320_share_dir, "config", "inference_qos.yaml")
+
     realsense_d405_share_dir = get_package_share_directory("realsense_d405")
     realsense_d405_config_file = os.path.join(realsense_d405_share_dir, "config", "inference_qos.yaml")
 
@@ -29,9 +32,19 @@ def generate_launch_description():
             package="neuromorphic_tactile_array",
             executable="nta_node",
             name="nta_node",
-            parameters=[neuromorphic_tactile_array_config_file],
+            parameters=[
+                {neuromorphic_tactile_array_config_file},
+                {"swap_sensors": True}
+                ],
             output="screen"
         ),
+        # Node(
+        #     package="prophesee_genx320",
+        #     executable="prophesee_genx320_node",
+        #     name="prophesee_genx320_node",
+        #     parameters=[prophesee_genx320_config_file],
+        #     output="screen"
+        # ),
         Node(
             package="realsense_d405",
             executable="realsense_d405_node",

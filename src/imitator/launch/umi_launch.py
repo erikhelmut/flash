@@ -19,7 +19,10 @@ def generate_launch_description():
             package="neuromorphic_tactile_array",
             executable="nta_node",
             name="nta_node",
-            parameters=[neuromorphic_tactile_array_config_file],
+            parameters=[
+                {neuromorphic_tactile_array_config_file},
+                {"swap_sensors": False}
+                ],
             output="screen"
         ),
         Node(
