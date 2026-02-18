@@ -177,7 +177,7 @@ class ForceControl(Node):
         if self.goal_force is not None and self.current_force_left is not None and self.current_force_right is not None and self.current_position is not None and self.goal_position is not None:
 
             #if self.goal_force <= -0.5 and self.current_force <= -0.5:
-            if self.goal_force != 0.0:
+            if self.goal_force < 10000:
 
                 # calculate mean force
                 self.current_force = (self.current_force_left + self.current_force_right) / 2.0

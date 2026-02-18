@@ -474,16 +474,16 @@ class IMITATORNode(Node):
             goal_nta_left, goal_nta_right, goal_distance, goal_ee_pos, goal_ee_ori = self.imitator.make_prediction(self.nta_left, self.nta_left_sum, self.nta_right, self.nta_right_sum, self.gripper_width, self.rs_d405_img, self.ee_pos, self.ee_ori)
 
             # move the robot
-            # if self.initial_movement_done is False:
-            #     # check if force is below -1 at least
-            #     if self.feats_fz < -0.7 and goal_force < -0.7:
-            #         self.total_h += self.delta_h
-            #         #self.panda.move_abs(goal_pos=self.ee_pos + np.array([-1 * self.delta_h, 0.0, 0.0]), rel_vel=0.01, goal_ori=self.ee_ori, asynch=True) # grape task
-            #         self.panda.move_abs(goal_pos=self.ee_pos + np.array([0.0, 0.0, self.delta_h]), rel_vel=0.01, goal_ori=self.ee_ori, asynch=True) # planting task
-            #         if self.total_h >= 0.1:
-            #             self.initial_movement_done = True
-            # else:
-            self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.01, goal_ori=goal_ee_ori, asynch=True) # 0.02
+            if self.initial_movement_done is False:
+                # check if force is below -1 at least
+                if goal_nta_left > 10000 and goal_nta_right > 10000:
+                    self.total_h += self.delta_h
+                    #self.panda.move_abs(goal_pos=self.ee_pos + np.array([-1 * self.delta_h, 0.0, 0.0]), rel_vel=0.01, goal_ori=self.ee_ori, asynch=True) # grape task
+                    self.panda.move_abs(goal_pos=self.ee_pos + np.array([0.0, 0.0, self.delta_h]), rel_vel=0.01, goal_ori=self.ee_ori, asynch=True) # planting task
+                    if self.total_h >= 0.1:
+                        self.initial_movement_done = True
+            else:
+                self.panda.move_abs(goal_pos=goal_ee_pos, rel_vel=0.01, goal_ori=goal_ee_ori, asynch=True) # 0.02
 
             msg = GoalForceController()
             msg.goal_force = float((goal_nta_left + goal_nta_right) / 2.0)
